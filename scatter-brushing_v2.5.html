@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<!http://dc-js.github.io/dc.js/examples/scatter-brushing.html>
+<html lang="en">
+<head>
+  <title>Right-Panel / Estimation Tab</title>
+    <meta charset="UTF-8">
+
+  <style>
+        body { 
+          background-color: white;
+          }
+        .axis path,
+        .axis line{
+            fill: none;
+            stroke: grey;
+            stroke-width: 1;
+            shape-rendering: crispEdges;
+          }
+        .axis text{font: 10px Georgia;
+          }
+        text.label {
+            font: 12px Georgia;
+          }
+
+
+            .point {
+              fill: #7A714E;
+              fill-opacity: .25;
+              }
+            .point.selected {
+              fill: steelblue;
+              fill-opacity: 1;
+              stroke: white;
+              }
+            .brush .extent {
+              stroke: #fff;
+              fill-opacity: .125;
+              shape-rendering: crispEdges;
+              }
+
+  </style>
+</head>
+<body>
+  <div id="test1"></div>
+  <div id="test2" style="position: absolute;">
+  </div>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script "text/javascript" src="PrjDays.json"></script>
+  <script type="text/javascript">
+
+
+// data
+dataGroup = d3.nest()
+    .key(function(d) {return d.project;})
+    .sortKeys(d3.ascending)
+    .entries(dataset);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// global parameters
+var size = {w: 300, h: 300};
+// Parameters chart 1
+// Set the dimensions of the canvas / graph
+var margin1 = {top: 30, right: 20, bottom: 75, left: 75},
+    width1 = size.w - margin1.left - margin1.right,
+    height1 = size.h - margin1.top - margin1.bottom;
+// Set the ranges
+var xMxDflt1 = 750000;
+var yMxDflt1 = 5000000000;
+var xScl1 = d3.scale.log().range([0, width1]).domain([1,xMxDflt1]);
+var yScl1 = d3.scale.log().range([height1, 0]).domain([1,yMxDflt1]);
+// Define the axes
+var xAxis1 = d3.svg.axis().scale(xScl1)
+    .orient("bottom").ticks(4);
+var yAxis1 = d3.svg.axis().scale(yScl1)
+    .orient("left").ticks(4);
+
+// Parameters chart 2
+// Set the dimensions of the canvas / graph
+var margin2 = {top: 30, right: 20, bottom: 75, left: 75},
+    width2 = size.w - margin2.left - margin2.right,
+    height2 = size.h - margin2.top - margin2.bottom;
+// Set the ranges
+var xMxDflt2 = 6000;
+var yMxDflt2 = 40000;
+var xScl2 = d3.scale.linear().range([0, width2]).domain([0,xMxDflt2]);
+var yScl2 = d3.scale.linear().range([height2, 0]).domain([0,yMxDflt2]);
+// Define the axes
+var xAxis2 = d3.svg.axis().scale(xScl2)
+    .orient("bottom").ticks(4);
+var yAxis2 = d3.svg.axis().scale(yScl2)
+    .orient("left").ticks(4);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Create svg1
+var svg1 = d3.select("#test1")
+    .append("svg")
+        .attr("width", width1 + margin1.left + margin1.right)
+        .attr("height", height1 + margin1.top + margin1.bottom)
+        .attr("id","svg1")
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin1.left + "," + margin1.top + ")");
+
+      // clip outside viewport        
+      var clip1 = svg1.append("defs").append("clipPath")
+         .attr("id", "clipBox");
+      svg1.append('rect') // outline for reference
+          .attr({width: width1,
+                 height: height1,
+                 id: "viewport",
+                 fill: "white"
+                }); // attributes in JS list format
+      clip1.append("use").attr("xlink:href", "#viewport");   
+
+// Add the Y Axis
+svg1.append("g")
+    .attr("class", "axis")
+    .call(yAxis1)
+    .append("text")
+      .attr("class","label")
+      .style("text-anchor","middle")
+      .attr("transform", 
+              "translate(" + 0 + "," + margin2.top/-2 + ")")
+      .text("Output (lines of code)");
+
+// Add the X Axis
+svg1.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(0," + height1 + ")")
+    .call(xAxis1)
+    .append('text')
+      .attr("class","label")
+      .style("text-anchor","end")
+      .attr("transform", 
+              "translate(" + (width2 + margin2.right) + "," + margin2.bottom/1.5 + ")")
+      .text("Input (resources)");
+
+// Fore-ground Display   
+// circles
+var points1 = svg1.selectAll('.point')
+    .data(dataset.filter(function(d){return d.Cat=="final";}))
+    .enter()
+    .append('circle')
+    .attr('class','point')
+    .attr('cx', function(d){ return xScl1(+d.PrjEffMx) ;})
+    .attr('cy', function(d){ return yScl1(+d.PrjLocAddMx) ;})
+    .attr('id', function(d){ return d.project;})
+    .attr('r', 2);
+
+            /*
+            .transition().delay(1000).duration(1000) 
+            .style("text-anchor", "start")
+            .attr("dx", ".8em")
+            .attr("dy", ".15em")
+            .attr("transform", function(d) {
+                return "rotate(55)" 
+              })
+            .each("end", function() { 
+                xScl1.scale.log();
+                //xScl1 = d3.scale.log().range([1, width1]).domain([1,50000]);
+
+                svg1.select(".x")
+                .transition().delay(1000).duration(1000)
+                .call(xAxis1.scale(xScl1))
+                
+                .selectAll("text")
+                   .transition().delay(1000).duration(1000)  
+                   .style("text-anchor", "start")
+                   .attr("transform", function(d) {
+                      return "rotate(55)" 
+                      });
+
+                // y-axis
+                yScl1.scale.log();
+                //yScl1 = d3.scale.log().range([height1, 1]).domain([1,5000000]);
+
+                svg1.selectAll(".y")
+                .transition().delay(1000).duration(1000)
+                .call(yAxis1.scale(yScl1));
+
+                // circles
+                //xScl1 = d3.scale.log().range([1, width1]).domain([1,50000]);
+                //yScl1 = d3.scale.log().range([height1, 1]).domain([1,5000000]);
+                svg1.selectAll(".point") 
+                    .data(dataset.filter(function(d){return d.Cat=="final";}))
+                     .transition().delay(1000).duration(1000)
+                     .attr('cx', function(d){ return xScl1(+d.PrjEffMx);})
+                     .attr('cy', function(d){ return yScl1(+d.PrjLocAddMx);})
+
+
+           
+});
+*/
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Create svg2
+var svg2 = d3.select("#test2")
+    .append("svg")
+        .attr("width", width2 + margin2.left + margin2.right)
+        .attr("height", height2 + margin2.top + margin2.bottom)
+        .style("position","absolute")
+        .style("left","0px")
+        .style("top","0px")
+        .style("z-index","2")
+        .style("left","0px")
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin2.left + "," + margin2.top + ")");
+/*
+// clip outside viewport        
+var clip2 = svg2.append("defs").append("clipPath")
+   .attr("id", "clipBox");
+   
+svg2.append('rect') // outline for reference
+    .attr({width: width2,
+           height: height2,
+           id: "viewport",
+           fill: "white"
+          }); // attributes in JS list format
+
+clip2.append("use").attr("xlink:href", "#viewport");   
+*/
+
+// Add the X Axis
+svg2.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height2 + ")")
+    .call(xAxis2)
+    .append('text')
+      .attr("class","label")
+      .style("text-anchor","end")
+      .attr("transform", 
+              "translate(" + (width2 + margin2.right) + "," + margin2.bottom/1.5 + ")")
+      .text("Duration (days)");
+
+
+// Add the Y Axis
+svg2.append("g")
+    .attr("class", "y axis")
+    .call(yAxis2)
+    .append("text")
+      .attr("class","label")
+      .style("text-anchor","middle")
+      .attr("transform", 
+              "translate(" + 0 + "," + margin2.top/-2 + ")")
+      .text("Effort (person days)");
+
+// Fore-ground Display   
+// circles
+var points2 = svg2.selectAll('.point')
+    .data(dataset.filter(function(d){return d.Cat=="final";}))
+    .enter()
+    .append('circle')
+    .attr('class','point')
+    .attr('cx', function(d){ return xScl2(+d.PrjDurMx);})
+    .attr('cy', function(d){ return yScl2(+d.PrjEffMx);})
+    .attr('id', function(d){ return d.project;})
+    .attr('r', 2);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// canvas ----------------------------------------------------------------
+var base = d3.select("#test2");
+var chart = base.append('canvas')
+                .attr("id","chart")
+                .attr("width", 300)
+                .attr("height", 300)
+                //.attr("style","border:1px dotted")
+        .attr("width", width2 + margin2.left + margin2.right)
+        .attr("height", height2 + margin2.top + margin2.bottom)
+        .style("position","absolute")
+        .style("left","0px")
+        .style("top","0px")
+        .style("z-index","1")
+        .style("left","0px")
+    .append("g")
+        .attr("transform", 
+              "translate(" + margin2.left + "," + margin2.top + ")");
+
+/*
+chart = document.getElementById('chart'); 
+var context = chart.getContext("2d");   
+
+//dataGroup[0].values[0].PrjDur
+for(var i=1; i<dataGroup.length; i++){
+  context.strokeStyle = 'lightgray';
+  context.globalAlpha = 0.125;
+  context.beginPath();
+  context.moveTo(margin2.left, height2 + margin2.top);
+  
+    for(var d=0; d<dataGroup[i].values.length; d++){
+      context.lineTo(xScl2(dataGroup[i].values[d].PrjDur) + margin2.left, yScl2(dataGroup[i].values[d].PrjEff )  + margin2.top );
+      };
+  context.lineWidth = .125;
+  context.stroke();
+  context.closePath;
+};
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+// brush selection ----------------------------------------------------------------
+var datFinal = dataset.filter(function(d){return d.Cat=="final";})
+var datFinArr = [];
+var tmp = d3.select('#svg1').selectAll('.point');
+for(var i=0; i<datFinal.length; i++){
+  var tmpArr = [];
+  tmpArr[0] = tmp[0][i].getAttribute('cx');
+  tmpArr[1] = tmp[0][i].getAttribute('cy');
+  tmpArr[2] = tmp[0][i].getAttribute('id');
+  tmpArr[3] = i;
+  datFinArr.push(tmpArr);;
+  }
+
+quadtree = d3.geom.quadtree()(datFinArr);
+
+
+  // brush for svg1
+  var brush = d3.svg.brush()
+    .x(d3.scale.identity().domain([0, width1]))
+    .y(d3.scale.identity().domain([0, height1]))
+    .on("brush", brushed)
+    .on("brushend", brushended);
+
+  // brush
+  svg1.append("g")
+    .attr("class", "brush")
+    .call(brush)
+    .call(brush.event);
+
+  
+
+  // brush functions
+  function brushed() {
+    // points
+    var extent = 
+      brush.extent();
+    d3.selection.prototype.moveToFront = function() {
+      return this.each(function(){
+      this.parentNode.appendChild(this);
+       });
+      };
+    d3.selectAll('.point').attr('class','point');
+      d3.selectAll('.point.selected').attr('class','point').moveToFront();
+    var rtn = search(quadtree, extent[0][0], extent[0][1], extent[1][0], extent[1][1]);
+      for(var i=0; i<rtn.length; i++){ d3.selectAll('point, #'+rtn[i]).attr('class','point selected')};
+
+
+    // zoom chart dimensions
+    // update axes
+    var xScl2 = d3.scale.linear().range([0, width2]).domain([0, xMxDflt2]);
+      var yScl2 = d3.scale.linear().range([height2, 0]).domain([0, yMxDflt2]);
+      var padding = .05;
+    var sel = svg2.selectAll('.point.selected')
+      var tmp = [];
+      sel.each(function(d){tmp.push( +d3.select(this).attr('cx') ); } )
+      var xMx2 = xScl2.invert( d3.max(tmp) );
+      tmp = [];
+        sel.each(function(d){tmp.push( +d3.select(this).attr('cy') ); } )
+        var yMx2 = yScl2.invert( d3.min(tmp) );
+    if( isNaN(xMx2) | isNaN(yMx2) ){xMx2 = xMxDflt2; yMx2 = yMxDflt2;}
+
+    xScl2.domain([0, xMx2+(padding*xMx2) ]);
+    yScl2.domain([0, yMx2+(padding*yMx2) ]);
+
+    svg2.selectAll(".x")
+     .transition().duration(1000)
+     .call(xAxis2.scale(xScl2));
+    svg2.selectAll(".y")
+     .transition().duration(1000)
+     .call(yAxis2.scale(yScl2));
+
+     // circles
+     svg2.selectAll(".point") 
+      .data(dataset.filter(function(d){return d.Cat=="final";}))
+      .transition().duration(1000)
+      .attr('cx', function(d){ return xScl2(+d.PrjDurMx);})
+      .attr('cy', function(d){ return yScl2(+d.PrjEffMx);})
+
+
+
+
+    // paths
+    chart = document.getElementById('chart'); 
+    var context = chart.getContext("2d");   
+    context.clearRect(0, 0, 300, 300);
+
+    for(var i=1; i<dataGroup.length; i++){
+        context.strokeStyle = 'gray';
+        context.globalAlpha = 0.125;
+        context.beginPath();
+        context.moveTo(margin2.left, height2 + margin2.top);
+        
+          for(var d=0; d<dataGroup[i].values.length; d++){
+            context.lineTo(xScl2(dataGroup[i].values[d].PrjDur) + margin2.left, yScl2(dataGroup[i].values[d].PrjEff )  + margin2.top );
+            };
+        context.lineWidth = .125;
+        context.stroke();
+        context.closePath;
+      };
+
+
+
+
+    chart = document.getElementById('chart'); 
+    var context = chart.getContext("2d");
+
+    var tmpArr = []; 
+    dataGroup.forEach( function(d){ tmpArr.push(d.key); });
+    var tmpIndx = [];
+    for(var i=0; i<rtn.length; i++){ tmpIndx.push( tmpArr.indexOf( rtn[i] ) ); }
+
+    for( var i=0; i<tmpIndx.length; i++){ 
+          tmpData = dataGroup[ tmpIndx[i] ] ;
+
+              context.strokeStyle = '#206DAD';
+              context.beginPath();
+              context.moveTo(margin2.left, height2 + margin2.top);
+              
+                for(var d=0; d<tmpData.values.length; d++){
+                  context.lineTo(xScl2(tmpData.values[d].PrjDur) + margin2.left, yScl2(tmpData.values[d].PrjEff )  + margin2.top );
+                  };
+              context.lineWidth = .25;
+              context.stroke();
+              context.closePath;
+            };
+          
+  }
+
+
+
+  function brushended() {
+    if (!d3.event.sourceEvent) return; // only transition after input
+    d3.select(this).transition()
+      .duration(brush.empty() ? 0 : 750)
+      //.call(brush.extent(defaultExtent))
+      .call(brush.event);
+
+    xScl2 = d3.scale.linear().range([1, width1]).domain([0,xMxDflt2]);
+    yScl2 = d3.scale.linear().range([height1, 1]).domain([0,yMxDflt2]);
+/*
+    svg2.selectAll(".x")
+     .transition().duration(1000)
+     .call(xAxis2.scale(xScl2));
+    svg2.selectAll(".y")
+     .transition().duration(1000)
+     .call(yAxis2.scale(yScl2));
+*/
+    svg2.selectAll("x axis")
+     .transition().duration(1000)
+     .call(xAxis2.scale(xScl2));
+    svg2.selectAll("y axis")
+     .transition().duration(1000)
+     .call(yAxis2.scale(yScl2));
+
+     // circles
+     svg2.selectAll(".point") 
+         .data(dataset.filter(function(d){return d.Cat=="final";}))
+          .transition().duration(1000)
+          .attr('cx', function(d){ return xScl2(+d.PrjDurMx);})
+          .attr('cy', function(d){ return yScl2(+d.PrjEffMx);})
+
+
+
+
+
+
+  }
+
+  // Find the nodes within the specified rectangle.
+  //quadtree.visit(function(n){console.log(n)});
+  function search(quadtree, x0, y0, x3, y3) {
+   var validData = [];
+   quadtree.visit(function(node, x1, y1, x2, y2) {
+     var p = node.point;
+     if (p) {
+       p.selected = (p[0] >= x0) && (p[0] < x3) && (p[1] >= y0) && (p[1] < y3);
+       if (p.selected) {
+         validData.push(p[2]);
+       }
+     }
+     return x1 >= x3 || y1 >= y3 || x2 < x0 || y2 < y0;
+   });
+   return validData;
+ }
+
+
+/*
+//REFERENCES
+//http://stackoverflow.com/questions/11336251/accessing-d3-js-element-attributes-from-the-datum
+//http://stackoverflow.com/questions/22990350/svg-databinding-based-on-key
+//if you'd like to access the attributes of all selected elements, use this in your each function
+d3.selectAll(".mynode").each( function(d, i){
+  if(d.someId == targetId){
+    console.log( d3.select(this).attr("cx") );
+  }
+}
+*/
+
+
+
+
+  </script>
+
+</body>
+</html>
